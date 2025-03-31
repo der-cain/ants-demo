@@ -1,11 +1,11 @@
 // --- Simulation Parameters ---
-let NUM_ANTS = 2500;
+let NUM_ANTS = 600;
 let ANT_SPEED = 1; // Grid cells per update step (can be fractional)
 let EVAPORATION_RATE = 0.005; // Pheromone decay per frame (multiplicative)
 let DEPOSITION_RATE_EXPLORE = 15; // Amount deposited by searching ants
 let DEPOSITION_RATE_RETURN = 15; // Amount deposited by returning ants
 let PHEROMONE_MAX = 255; // Max strength for visualization mapping
-let PHEROMONE_DURATION = 2200; // Max "charge" in frames/updates for depositing return pheromone
+let PHEROMONE_DURATION = 5000; // Max "charge" in frames/updates for depositing return pheromone
 let SENSE_RADIUS = 5; // How many cells away ants can sense pheromones (1 = immediate neighbors)
 let GOAL_SENSE_RADIUS = 5;
 let SENSE_ANGLE = Math.PI / 2.5; // Field of view for sensing (~72 degrees)
@@ -209,7 +209,7 @@ function findValidPosition(targetX, targetY) {
 
 function spawnInitialAnts() {
   ants = [];
-  for (let i = 0; i < NUM_ANTS; i++) {
+  for (let i = 0; i < (NUM_ANTS / 10); i++) {
     ants.push(new Ant(colonyPos.x, colonyPos.y));
   }
   lastAntSpawnTime = millis();
