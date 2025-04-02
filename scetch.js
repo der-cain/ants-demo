@@ -57,7 +57,13 @@ let COLOR_PHEROMONE_RETURN;
 // ==================================
 
 function setup() {
-  // Calculate cell size based on window dimensions and config
+  // Generate the maze first to get final dimensions
+  const mazeResult = generateMaze(simulationConfig.GRID_COLS, simulationConfig.GRID_ROWS);
+  simulationConfig.maze = mazeResult.grid;
+  simulationConfig.GRID_COLS = mazeResult.finalCols; // Update config with actual dimensions used
+  simulationConfig.GRID_ROWS = mazeResult.finalRows;
+
+  // Calculate cell size and canvas dimensions based on FINAL grid size
   let aspectRatio = simulationConfig.GRID_COLS / simulationConfig.GRID_ROWS;
   let canvasWidth = windowWidth * 0.9;
   let canvasHeight = windowHeight * 0.9;
@@ -70,11 +76,12 @@ function setup() {
   }
   // Assign calculated CELL_SIZE to the config
   simulationConfig.CELL_SIZE = floor(canvasWidth / simulationConfig.GRID_COLS);
+  // Recalculate canvas size based on integer cell size
   canvasWidth = simulationConfig.CELL_SIZE * simulationConfig.GRID_COLS;
   canvasHeight = simulationConfig.CELL_SIZE * simulationConfig.GRID_ROWS;
 
   createCanvas(canvasWidth, canvasHeight);
-  pixelDensity(1);
+  pixelDensity(1); // Ensure consistent pixel density
 
   // Initialize Colors (using global p5 color function)
   COLOR_BACKGROUND = color(51);
@@ -87,10 +94,10 @@ function setup() {
   COLOR_PHEROMONE_EXPLORE = color(0, 150, 255, 180); // Light Blue
   COLOR_PHEROMONE_RETURN = color(255, 100, 0, 180); // Orange
 
-  // Initialize Maze using config dimensions
-  createPredefinedMaze(); // This function will now use simulationConfig.GRID_COLS/ROWS
+  // Maze is already generated and assigned to simulationConfig.maze above
+  // createPredefinedMaze(); // No longer needed
 
-  // Initialize Pheromone Grids using config dimensions
+  // Initialize Pheromone Grids using FINAL config dimensions
   simulationConfig.explorePheromones = createGrid(simulationConfig.GRID_COLS, simulationConfig.GRID_ROWS, 0);
   simulationConfig.returnPheromones = createGrid(simulationConfig.GRID_COLS, simulationConfig.GRID_ROWS, 0);
 
@@ -146,8 +153,102 @@ function createGrid(cols, rows, defaultValue = 0) {
   return grid;
 }
 
+// ==================================
+//      Maze Generation (Recursive Backtracker)
+// ==================================
+function generateMaze(cols, rows) {
+  // Ensure odd dimensions for easier wall handling between cells
+  // Use local variables for calculation to avoid modifying config prematurely
+  let mazeCols = cols % 2 === 0 ? cols - 1 : cols;
+  let mazeRows = rows % 2 === 0 ? rows - 1 : rows;
+  if (mazeCols < 3) mazeCols = 3; // Ensure minimum size
+  if (mazeRows < 3) mazeRows = 3;
+
+  let maze = createGrid(mazeCols, mazeRows, 1); // Start with all walls
+  let stack = [];
+  // Keep track of visited cells for the generation algorithm itself
+  let visited = createGrid(mazeCols, mazeRows, false);
+
+  // Choose a random starting cell (must be odd coordinates within the maze grid)
+  let startX = floor(random(mazeCols / 2)) * 2 + 1;
+  let startY = floor(random(mazeRows / 2)) * 2 + 1;
+  let current = { x: startX, y: startY };
+
+  visited[current.x][current.y] = true;
+  maze[current.x][current.y] = 0; // Mark starting cell as path
+  stack.push(current);
+
+  while (stack.length > 0) {
+    current = stack[stack.length - 1]; // Peek at the top of the stack
+    let neighbors = [];
+
+    // Check potential neighbors (2 cells away in cardinal directions)
+    let potentialNeighbors = [
+      { x: current.x, y: current.y - 2 }, // North
+      { x: current.x + 2, y: current.y }, // East
+      { x: current.x, y: current.y + 2 }, // South
+      { x: current.x - 2, y: current.y }  // West
+    ];
+
+    // Filter valid, unvisited neighbors
+    for (let n of potentialNeighbors) {
+      // Check bounds (greater than 0 and less than mazeCols/Rows - 1 to stay within walls)
+      if (n.x > 0 && n.x < mazeCols - 1 && n.y > 0 && n.y < mazeRows - 1 && !visited[n.x][n.y]) {
+        neighbors.push(n);
+      }
+    }
+
+    if (neighbors.length > 0) {
+      // Choose a random neighbor
+      let chosen = random(neighbors);
+
+      // Push the current cell to the stack
+      // (We push current *before* moving to chosen, standard for this algorithm)
+      // stack.push(current); // Already peeked, only push chosen when moving
+
+      // Remove the wall between the current cell and the chosen cell
+      let wallX = current.x + (chosen.x - current.x) / 2;
+      let wallY = current.y + (chosen.y - current.y) / 2;
+      maze[wallX][wallY] = 0; // Carve the path
+
+      // Move to the chosen cell
+      current = chosen; // Update current for the next iteration's check
+      visited[current.x][current.y] = true;
+      maze[current.x][current.y] = 0; // Mark chosen cell as path
+      stack.push(current); // Push the new current cell onto the stack
+
+    } else {
+      // If no unvisited neighbors, backtrack
+      stack.pop();
+    }
+  }
+
+  // Ensure outer border is wall (redundant as we start with all walls and stay within bounds)
+  // for (let i = 0; i < mazeCols; i++) {
+  //   maze[i][0] = 1;
+  //   maze[i][mazeRows - 1] = 1;
+  // }
+  // for (let j = 0; j < mazeRows; j++) {
+  //   maze[0][j] = 1;
+  //   maze[mazeCols - 1][j] = 1;
+  // }
+
+  // Ensure colony and potential food start positions are open AFTER generation
+  // These might be overwritten if they were walls initially, so force them open.
+  maze[1][1] = 0;
+  if (mazeCols > 2 && mazeRows > 2) { // Check bounds before accessing
+      maze[mazeCols - 2][mazeRows - 2] = 0;
+  }
+
+
+  // Return the generated maze and the dimensions used
+  return { grid: maze, finalCols: mazeCols, finalRows: mazeRows };
+}
+
+
 function createPredefinedMaze() {
   // Uses config for dimensions, assigns to config.maze
+  // THIS FUNCTION IS NO LONGER USED, replaced by generateMaze
   simulationConfig.maze = createGrid(simulationConfig.GRID_COLS, simulationConfig.GRID_ROWS, 0);
   const maze = simulationConfig.maze; // local alias for convenience
   const cols = simulationConfig.GRID_COLS;
@@ -426,11 +527,16 @@ class Ant {
 
     // Need isValidGridPos which uses config
     if (isValidGridPos(nextGrid.x, nextGrid.y) && simulationConfig.maze[nextGrid.x][nextGrid.y] != 1) {
+      // Valid move, update position
       this.pos = nextPos;
     } else {
+      // Hit a wall or went out of bounds
+      // Choose a new random direction instead of just reversing
       this.vel = p5.Vector.random2D().mult(simulationConfig.ANT_SPEED);
+      // Optional: Could add a slight bias away from the wall, but random is simpler and often sufficient
     }
 
+    // Constrain position to stay within canvas bounds (redundant if maze has outer walls, but safe)
     // Use width/height from config (assuming they are set appropriately if needed outside setup)
     // Or use p5 width/height if relying on canvas
     this.pos.x = constrain(this.pos.x, 0, width ?? simulationConfig.CELL_SIZE * simulationConfig.GRID_COLS); 
