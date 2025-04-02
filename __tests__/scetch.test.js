@@ -7,7 +7,8 @@ const {
   isValidGridPos,
   gridToPixel,
   pixelToGrid,
-  Ant
+  Ant,
+  generateMaze // Import the new function
 } = sketch;
 
 // Mock p5.js global functions NEEDED by the imported sketch functions
@@ -24,9 +25,21 @@ global.max = Math.max;
 global.min = Math.min;
 global.abs = Math.abs;
 global.random = (arg1, arg2) => {
-    if (arg1 === undefined) return Math.random();
-    if (arg2 === undefined) return Math.random() * arg1;
-    return Math.random() * (arg2 - arg1) + arg1;
+    if (Array.isArray(arg1)) {
+        // Handle random(array) -> return random element
+        if (arg1.length === 0) return undefined;
+        const index = Math.floor(Math.random() * arg1.length);
+        return arg1[index];
+    } else if (arg1 === undefined) {
+        // Handle random() -> return float 0..1
+        return Math.random();
+    } else if (arg2 === undefined) {
+        // Handle random(max) -> return float 0..max
+        return Math.random() * arg1;
+    } else {
+        // Handle random(min, max) -> return float min..max
+        return Math.random() * (arg2 - arg1) + arg1;
+    }
 };
 global.PI = Math.PI;
 global.TWO_PI = Math.PI * 2;
@@ -374,4 +387,81 @@ describe("Initialization and Update Functions", () => {
     expect(simulationConfig.lastAntSpawnTime).toBe(500); // Should NOT update spawn time
   });
 
+});
+
+// New describe block for Maze Generation
+describe("Maze Generation", () => {
+  test("generateMaze returns correct structure", () => {
+    const result = generateMaze(10, 8); // Example dimensions
+    expect(result).toHaveProperty('grid');
+    expect(result).toHaveProperty('finalCols');
+    expect(result).toHaveProperty('finalRows');
+    expect(Array.isArray(result.grid)).toBe(true);
+    expect(typeof result.finalCols).toBe('number');
+    expect(typeof result.finalRows).toBe('number');
+  });
+
+  test("generateMaze returns odd dimensions >= 3", () => {
+    const result1 = generateMaze(10, 8); // Even inputs
+    expect(result1.finalCols % 2).toBe(1);
+    expect(result1.finalRows % 2).toBe(1);
+    expect(result1.finalCols).toBeGreaterThanOrEqual(3);
+    expect(result1.finalRows).toBeGreaterThanOrEqual(3);
+    expect(result1.finalCols).toBe(9); // 10 -> 9
+    expect(result1.finalRows).toBe(7); // 8 -> 7
+
+    const result2 = generateMaze(11, 9); // Odd inputs
+    expect(result2.finalCols).toBe(11);
+    expect(result2.finalRows).toBe(9);
+
+    const result3 = generateMaze(2, 2); // Small inputs
+    expect(result3.finalCols).toBe(3);
+    expect(result3.finalRows).toBe(3);
+  });
+
+  test("generateMaze grid dimensions match final dimensions", () => {
+    const result = generateMaze(15, 13);
+    expect(result.grid.length).toBe(result.finalCols);
+    expect(result.grid[0].length).toBe(result.finalRows);
+  });
+
+  test("generateMaze has wall borders", () => {
+    const result = generateMaze(7, 5);
+    const { grid, finalCols, finalRows } = result;
+    // Check top/bottom borders
+    for (let i = 0; i < finalCols; i++) {
+      expect(grid[i][0]).toBe(1);
+      expect(grid[i][finalRows - 1]).toBe(1);
+    }
+    // Check left/right borders
+    for (let j = 0; j < finalRows; j++) {
+      expect(grid[0][j]).toBe(1);
+      expect(grid[finalCols - 1][j]).toBe(1);
+    }
+  });
+
+  test("generateMaze ensures start/end points are paths", () => {
+    const result = generateMaze(9, 9);
+    const { grid, finalCols, finalRows } = result;
+    expect(grid[1][1]).toBe(0); // Start point
+    expect(grid[finalCols - 2][finalRows - 2]).toBe(0); // End point
+  });
+
+  test("generateMaze contains both paths and walls", () => {
+    const result = generateMaze(11, 11);
+    const { grid, finalCols, finalRows } = result;
+    let hasPath = false;
+    let hasWall = false;
+    for (let i = 0; i < finalCols; i++) {
+      for (let j = 0; j < finalRows; j++) {
+        if (grid[i][j] === 0) hasPath = true;
+        if (grid[i][j] === 1) hasWall = true;
+      }
+    }
+    expect(hasPath).toBe(true);
+    expect(hasWall).toBe(true);
+  });
+
+  // Optional: More advanced test - check connectivity (requires pathfinding)
+  // test("generateMaze creates a connected maze", () => { ... });
 });

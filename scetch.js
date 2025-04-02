@@ -8,8 +8,8 @@ const simulationConfig = {
   DEPOSITION_RATE_RETURN: 15, // Amount deposited by returning ants
   PHEROMONE_MAX: 255, // Max strength for visualization mapping
   PHEROMONE_DURATION: 5000, // Max "charge" in frames/updates for depositing return pheromone
-  SENSE_RADIUS: 5, // How many cells away ants can sense pheromones (1 = immediate neighbors)
-  GOAL_SENSE_RADIUS: 5,
+  SENSE_RADIUS: 1.1, // How many cells away ants can sense pheromones (1 = immediate neighbors)
+  GOAL_SENSE_RADIUS: 2,
   SENSE_ANGLE: Math.PI / 2.5, // Field of view for sensing (~72 degrees)
   TURN_ANGLE: Math.PI / 6, // How much an ant can turn per step (~30 degrees)
   FOLLOW_STRENGTH_WEIGHT: 5, // How strongly ants follow pheromones vs random walk
@@ -19,8 +19,8 @@ const simulationConfig = {
   ANT_HISTORY_LENGTH: 20, // How many steps an ant remembers to avoid loops
 
   // Maze and Grid Settings
-  GRID_COLS: 50,
-  GRID_ROWS: 40,
+  GRID_COLS: 20,
+  GRID_ROWS: 16,
   CELL_SIZE: undefined, // Calculated in setup
   maze: [], // 0 = path, 1 = wall - Initialized in setup/createPredefinedMaze
 
@@ -169,10 +169,22 @@ function generateMaze(cols, rows) {
   // Keep track of visited cells for the generation algorithm itself
   let visited = createGrid(mazeCols, mazeRows, false);
 
-  // Choose a random starting cell (must be odd coordinates within the maze grid)
-  let startX = floor(random(mazeCols / 2)) * 2 + 1;
-  let startY = floor(random(mazeRows / 2)) * 2 + 1;
+  // Choose a random starting cell (must be odd coordinates within the maze grid, excluding borders)
+  // Max random index needed is (dimension - 1) / 2 - 1
+  // So the argument to random should be (dimension - 1) / 2
+  let startX = floor(random((mazeCols - 1) / 2)) * 2 + 1;
+  let startY = floor(random((mazeRows - 1) / 2)) * 2 + 1;
   let current = { x: startX, y: startY };
+
+  // Ensure start position is valid before accessing visited grid
+  if (startX < 0 || startX >= mazeCols || startY < 0 || startY >= mazeRows) {
+      console.error("Invalid start position calculated in generateMaze:", startX, startY, "for dimensions", mazeCols, mazeRows);
+      // Fallback to a safe default if calculation somehow failed
+      startX = 1;
+      startY = 1;
+      current = { x: startX, y: startY };
+  }
+
 
   visited[current.x][current.y] = true;
   maze[current.x][current.y] = 0; // Mark starting cell as path
@@ -239,7 +251,6 @@ function generateMaze(cols, rows) {
   if (mazeCols > 2 && mazeRows > 2) { // Check bounds before accessing
       maze[mazeCols - 2][mazeRows - 2] = 0;
   }
-
 
   // Return the generated maze and the dimensions used
   return { grid: maze, finalCols: mazeCols, finalRows: mazeRows };
@@ -644,5 +655,6 @@ if (typeof module !== 'undefined' && module.exports) {
     updatePheromones,
     spawnInitialAnts,
     spawnNewAnts,
+    generateMaze, // Export the new function
   };
 }
