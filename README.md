@@ -4,7 +4,7 @@ This is a simulation of ants foraging for food.
 
 ## Running the simulation
 
-To run the simulation, open `scetch.js` in a browser that supports p5.js.
+To run the simulation, open `index.html` in a browser that supports p5.js.
 
 ## Running the tests
 
@@ -44,8 +44,10 @@ The simulation behavior can be adjusted by modifying the values within the `simu
 
 **Maze and Grid Settings:**
 
-*   `GRID_COLS`: Number of grid columns.
-*   `GRID_ROWS`: Number of grid rows.
+*   `GRID_COLS`: Desired maximum number of grid columns. The actual number of columns in the generated maze might be slightly smaller (e.g., to ensure odd dimensions for the generation algorithm). This value in `simulationConfig` is updated to the actual dimension after maze generation.
+*   `GRID_ROWS`: Desired maximum number of grid rows. The actual number of rows in the generated maze might be slightly smaller. This value in `simulationConfig` is updated to the actual dimension after maze generation.
+*   `CELL_SIZE`: The size of each grid cell in pixels. This is calculated automatically in the `setup` function based on the final grid dimensions and the canvas size.
+*   `maze`: A 2D array representing the maze structure where `0` indicates a path and `1` indicates a wall. This is initialized by the `generateMaze` function.
 
 **Performance:**
 
