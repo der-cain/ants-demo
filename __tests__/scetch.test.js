@@ -74,21 +74,30 @@ describe("Ant Class", () => {
     // Mock necessary p5.js functions and variables
     global.p5 = {
       Vector: {
-        random2D: () => ({ x: 1, y: 0, mult: () => ({ x: 1, y: 0 }) }),
+        random2D: () => {
+          const angle = Math.random() * 2 * Math.PI;
+          return { 
+            x: Math.cos(angle), 
+            y: Math.sin(angle), 
+            mult: (scalar) => ({ x: Math.cos(angle) * scalar, y: Math.sin(angle) * scalar }) 
+          };
+        },
         add: (v1, v2) => ({ x: v1.x + v2.x, y: v1.y + v2.y }),
-        fromAngle: () => ({ x: 1, y: 0, mult: () => ({ x: 1, y: 0 }) }),
+        fromAngle: (angle) => ({ x: Math.cos(angle), y: Math.sin(angle), mult: (scalar) => ({ x: Math.cos(angle) * scalar, y: Math.sin(angle) * scalar }) }),
       },
     };
     global.ANT_SPEED = 1;
     global.CELL_SIZE = 10;
-    global.width = 100;
-    global.height = 80;
+    global.GRID_COLS = 10;
+    global.GRID_ROWS = 8;
+    global.width = global.CELL_SIZE * global.GRID_COLS;
+    global.height = global.CELL_SIZE * global.GRID_ROWS;
     global.PHEROMONE_DURATION = 100;
     global.DEPOSITION_RATE_RETURN = 1;
-    global.explorePheromones = createGrid(10, 8, 0);
-    global.returnPheromones = createGrid(10, 8, 0);
-    global.isValidGridPos = (x, y) => x >= 0 && x < 10 && y >= 0 && y < 8;
-    global.maze = createGrid(10, 8, 0);
+    global.explorePheromones = createGrid(global.GRID_COLS, global.GRID_ROWS, 0);
+    global.returnPheromones = createGrid(global.GRID_COLS, global.GRID_ROWS, 0);
+    global.isValidGridPos = (x, y) => x >= 0 && x < global.GRID_COLS && y >= 0 && y < global.GRID_ROWS;
+    global.maze = createGrid(global.GRID_COLS, global.GRID_ROWS, 0);
   });
 
   test("Ant constructor initializes ant properties", () => {
