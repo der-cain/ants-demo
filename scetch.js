@@ -22,7 +22,7 @@ const simulationConfig = {
   GRID_COLS: 20,
   GRID_ROWS: 16,
   CELL_SIZE: undefined, // Calculated in setup
-  maze: [], // 0 = path, 1 = wall - Initialized in setup/createPredefinedMaze
+  maze: [], // 0 = path, 1 = wall - Initialized in setup
 
   // Pheromone Grids
   explorePheromones: undefined, // Initialized in setup
@@ -95,7 +95,6 @@ function setup() {
   COLOR_PHEROMONE_RETURN = color(255, 100, 0, 180); // Orange
 
   // Maze is already generated and assigned to simulationConfig.maze above
-  // createPredefinedMaze(); // No longer needed
 
   // Initialize Pheromone Grids using FINAL config dimensions
   simulationConfig.explorePheromones = createGrid(simulationConfig.GRID_COLS, simulationConfig.GRID_ROWS, 0);
@@ -256,39 +255,6 @@ function generateMaze(cols, rows) {
   return { grid: maze, finalCols: mazeCols, finalRows: mazeRows };
 }
 
-
-function createPredefinedMaze() {
-  // Uses config for dimensions, assigns to config.maze
-  // THIS FUNCTION IS NO LONGER USED, replaced by generateMaze
-  simulationConfig.maze = createGrid(simulationConfig.GRID_COLS, simulationConfig.GRID_ROWS, 0);
-  const maze = simulationConfig.maze; // local alias for convenience
-  const cols = simulationConfig.GRID_COLS;
-  const rows = simulationConfig.GRID_ROWS;
-
-  // Outer walls
-  for (let i = 0; i < cols; i++) {
-    maze[i][0] = 1;
-    maze[i][rows - 1] = 1;
-  }
-  for (let j = 0; j < rows; j++) {
-    maze[0][j] = 1;
-    maze[cols - 1][j] = 1;
-  }
-
-  // Simple internal walls (using cols/rows)
-  for (let i = 5; i < cols - 5; i++) {
-    if (i % 8 < 4) { maze[i][floor(rows * 0.3)] = 1; }
-  }
-  for (let i = 5; i < cols - 5; i++) {
-    if ((i + 4) % 8 < 4) { maze[i][floor(rows * 0.7)] = 1; }
-  }
-  for (let j = 5; j < rows - 5; j++) {
-    if (j % 6 < 3 && j < floor(rows * 0.7) - 2) { maze[floor(cols * 0.5)][j] = 1; }
-  }
-
-  maze[1][1] = 0;
-  maze[cols - 2][rows - 2] = 0;
-}
 
 function findValidPosition(targetX, targetY) {
   // Uses config for dimensions and maze
@@ -686,7 +652,6 @@ if (typeof module !== 'undefined' && module.exports) {
     Ant,
     // Export other functions if needed for testing (setup, draw, etc. are less common)
     setup, // Maybe useful if tests need to run setup
-    createPredefinedMaze,
     updatePheromones,
     spawnInitialAnts,
     spawnNewAnts,
