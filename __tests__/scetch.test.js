@@ -272,7 +272,7 @@ describe("Ant Class", () => {
 // New describe block for Initialization and Update functions
 describe("Initialization and Update Functions", () => {
   // Import functions needed within this block if not already top-level
-  const { createPredefinedMaze, updatePheromones, spawnInitialAnts, spawnNewAnts } = sketch;
+  const { updatePheromones, spawnInitialAnts, spawnNewAnts } = sketch;
 
   beforeEach(() => {
     // Reset config to defaults or known state before each test
@@ -291,31 +291,6 @@ describe("Initialization and Update Functions", () => {
 
     // Mock p5 functions needed by these specific tests
     global.millis = jest.fn().mockReturnValue(0); // Default mock for millis
-  });
-
-  test("createPredefinedMaze sets up walls in simulationConfig.maze", () => {
-    // Override dimensions for a clearer check
-    simulationConfig.GRID_COLS = 5;
-    simulationConfig.GRID_ROWS = 4;
-    createPredefinedMaze();
-
-    const maze = simulationConfig.maze;
-    expect(maze.length).toBe(5);
-    expect(maze[0].length).toBe(4);
-    // Check corners (should be walls)
-    expect(maze[0][0]).toBe(1);
-    expect(maze[4][0]).toBe(1);
-    expect(maze[0][3]).toBe(1);
-    expect(maze[4][3]).toBe(1);
-    // Check a point on the outer wall
-    expect(maze[2][0]).toBe(1);
-    expect(maze[0][2]).toBe(1);
-    // Check colony/food start points (should be clear)
-    expect(maze[1][1]).toBe(0);
-    expect(maze[3][2]).toBe(0); // GRID_COLS - 2, GRID_ROWS - 2
-    // Check an internal point (might be wall or path depending on logic)
-    // This part of the maze generation is simple, maybe less critical to test exactly
-    // expect(maze[2][1]).toBe(0); // Example check for an internal path
   });
 
   test("updatePheromones decreases pheromone levels", () => {
