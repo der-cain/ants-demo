@@ -542,9 +542,44 @@ class Ant {
       this.pos = nextPos;
     } else {
       // Hit a wall or went out of bounds
-      // Choose a new random direction instead of just reversing
-      this.vel = p5.Vector.random2D().mult(simulationConfig.ANT_SPEED);
-      // Optional: Could add a slight bias away from the wall, but random is simpler and often sufficient
+      // Determine wall normal to bias away from it
+      let normal = createVector(0, 0);
+
+      // Check if we hit a vertical wall (or out of bounds X)
+      // We check if the cell at (nextGrid.x, currentGrid.y) is blocked
+      if (nextGrid.x !== this.gridPos.x) {
+          if (!isValidGridPos(nextGrid.x, this.gridPos.y) || simulationConfig.maze[nextGrid.x][this.gridPos.y] === 1) {
+              normal.x = (this.gridPos.x - nextGrid.x) > 0 ? 1 : -1;
+          }
+      }
+
+      // Check if we hit a horizontal wall (or out of bounds Y)
+      // We check if the cell at (currentGrid.x, nextGrid.y) is blocked
+      if (nextGrid.y !== this.gridPos.y) {
+          if (!isValidGridPos(this.gridPos.x, nextGrid.y) || simulationConfig.maze[this.gridPos.x][nextGrid.y] === 1) {
+              normal.y = (this.gridPos.y - nextGrid.y) > 0 ? 1 : -1;
+          }
+      }
+
+      // Normalize if we found a direction, otherwise fall back to reverse direction
+      if (normal.magSq() > 0) {
+          normal.normalize();
+      } else {
+          normal = p5.Vector.sub(this.pos, nextPos).normalize();
+      }
+
+      // Choose a new random direction
+      let newDir = p5.Vector.random2D();
+
+      // If the random direction points into the wall (opposes the normal), reflect it
+      // so it points away from the wall
+      if (newDir.dot(normal) < 0) {
+          // Reflect: v = v - 2 * (v . n) * n
+          let reflectComp = p5.Vector.mult(normal, 2 * newDir.dot(normal));
+          newDir.sub(reflectComp);
+      }
+
+      this.vel = newDir.mult(simulationConfig.ANT_SPEED);
     }
 
     // Constrain position to stay within canvas bounds (redundant if maze has outer walls, but safe)
