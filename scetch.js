@@ -364,21 +364,16 @@ function drawPheromones() {
   const maxPher = simulationConfig.PHEROMONE_MAX;
   const cellSize = simulationConfig.CELL_SIZE;
 
-  // Need COLOR_PHEROMONE_EXPLORE and COLOR_PHEROMONE_RETURN (global p5 colors)
-  // Assuming these colors are initialized in setup()
-  const colorExplore = COLOR_PHEROMONE_EXPLORE ?? color(0, 150, 255, 180);
-  const colorReturn = COLOR_PHEROMONE_RETURN ?? color(255, 100, 0, 180);
-
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
       if (explore[i][j] > 0.1) {
         let alpha = map(explore[i][j], 0, maxPher, 0, 255);
-        fill(red(colorExplore), green(colorExplore), blue(colorExplore), alpha);
+        fill(red(COLOR_PHEROMONE_EXPLORE), green(COLOR_PHEROMONE_EXPLORE), blue(COLOR_PHEROMONE_EXPLORE), alpha);
         rect(i * cellSize, j * cellSize, cellSize, cellSize);
       }
       if (returnPher[i][j] > 0.1) {
         let alpha = map(returnPher[i][j], 0, maxPher, 0, 255);
-        fill(red(colorReturn), green(colorReturn), blue(colorReturn), alpha);
+        fill(red(COLOR_PHEROMONE_RETURN), green(COLOR_PHEROMONE_RETURN), blue(COLOR_PHEROMONE_RETURN), alpha);
         rect(i * cellSize, j * cellSize, cellSize, cellSize);
       }
     }
@@ -656,5 +651,6 @@ if (typeof module !== 'undefined' && module.exports) {
     spawnInitialAnts,
     spawnNewAnts,
     generateMaze, // Export the new function
+    drawPheromones,
   };
 }
